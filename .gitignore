@@ -1,3 +1,4 @@
+__pycache__
 # Virtual environment folder
 .env
 # Any files starting with "secrets", e.g. "secrets_users.py"
