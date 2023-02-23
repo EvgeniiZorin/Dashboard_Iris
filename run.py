@@ -9,10 +9,18 @@ import dash
 from dash import dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
 import plotly.express as px
+from dash.dependencies import State
 
+import dash_auth
+import secrets_users
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Authentification
+auth = dash_auth.BasicAuth(
+    app,
+    secrets_users.VALID_USERNAME_PASSWORD_PAIRS
+)
 
 colors = {'text': 'red'}
 np.random.seed(50)
