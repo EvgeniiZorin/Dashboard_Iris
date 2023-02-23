@@ -13,6 +13,7 @@ from dash.dependencies import State
 
 import dash_auth
 import secrets_users
+import styles
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -22,7 +23,11 @@ auth = dash_auth.BasicAuth(
     secrets_users.VALID_USERNAME_PASSWORD_PAIRS
 )
 
-colors = {'text': 'red'}
+# styles = {
+# 	'H1': {'textAlign':'center', 'color':'grey'},
+# 	'text': {'textAlign':'center', 'color':'grey', 'fontSize':20}
+# }
+
 np.random.seed(50)
 df = pd.DataFrame({
 	'x_rand': np.random.randint(1,61,60),
@@ -35,27 +40,27 @@ df_iris = px.data.iris()
 app.layout = html.Div([
 	html.H1(
 		children='Iris Dashboard!!!',
-		style = {
-			'textAlign': 'center',
-			'color': 'grey'
-		}
+		style=styles.H1
 	),
 	html.Div(
 		children='This is a dashboard about the classical Iris datasetDash',
-		style = {
-			'textAlign': 'center',
-			'color': 'grey'
-		}
+		style=styles.text
 	),
 	html.Br(),
 	# link: https://www.youtube.com/watch?v=1nEL0S8i2Wk
 	dbc.Row([
 		dbc.Col([
-			html.H1('Dropdown for Iris dataset:'),
-			html.Label('Choose an Iris species:'),
+			html.H1(
+				children='Controls for the plots',
+				style=styles.H1
+			),
+			html.Label(
+				children='Please choose Iris species:',
+				style=styles.text
+			),
 			html.Br(), # Add a break
 			dcc.Dropdown(
-				id='iris_scatterplot_dropdown',
+				id='iris_species_dropdown',
 				options = df_iris['species'].unique(),
 				value = 'setosa', # Choose default pre-selected value
 				multi = True, # Enable multi-choice option
@@ -64,24 +69,49 @@ app.layout = html.Div([
 			),
 		]),
 		dbc.Col([
+			html.H1(
+				children='Relationship of sepal length and width',
+				style=styles.H1
+			),
 			dcc.Graph(
 				id = 'iris_scatterplot'
 			),
 		])
 	]),
 	html.Br(),
-	html.Div(
-		children='Below you can see the dataset used for Iris:',
-		style = {
-			'textAlign': 'center',
-			'color': 'grey'
-		}
+	html.H1(
+		children='Sepal Characteristics',
+		style=styles.H1
 	),
 	html.Br(),
-	dash_table.DataTable(df_iris.to_dict('records'), [{"name": i, "id": i} for i in df_iris.columns])
+	dbc.Row([
+		dbc.Col([
+			html.H2(
+				children='Distribution of sepal length by species',
+				style=styles.H2
+			),
+			dcc.Graph(id = 'iris_barplot_sepalLength')
+		]),
+		dbc.Col([
+			html.H2(
+				children='Distribution of sepal width by species',
+				style=styles.H2
+			),
+			dcc.Graph(id = 'iris_barplot_sepalWidth')
+		])
+	]),
+	html.Br(),
+	# html.Div(
+	# 	children='Below you can see the dataset used for Iris:',
+	# 	style = H1_style
+	# ),
+	# # dcc.Graph(id = 'iris_barplot_sepalLength'),
+	# dash_table.DataTable(df_iris.to_dict('records'), [{"name": i, "id": i} for i in df_iris.columns])
 ])
 
-@app.callback(Output("iris_scatterplot", "figure"), Input('iris_scatterplot_dropdown', 'value')
+@app.callback(
+	Output("iris_scatterplot", "figure"), 
+	Input('iris_species_dropdown', 'value')
 )
 def sync_input(iris_scatterplot_selection):
 	print(iris_scatterplot_selection)
@@ -97,6 +127,44 @@ def sync_input(iris_scatterplot_selection):
 	fig.layout.plot_bgcolor = '#e1e1e1'
 	fig.layout.title = 'Iris plot by species'
 	return fig
+
+@app.callback(
+	Output('iris_barplot_sepalLength', 'figure'),
+	Input('iris_species_dropdown', 'value')
+)
+def figure1(input):
+	if type(input) == str:
+		input = [input]
+	df_iris_slice = df_iris[df_iris['species'].isin(input)]
+	fig = px.histogram(
+		df_iris_slice, x='sepal_length', color='species', nbins=40
+	)
+	fig.update_layout(barmode='overlay')
+	fig.update_traces(opacity=0.75)
+	fig.layout.title = "title1"
+	fig.layout.paper_bgcolor = '#f2f2f2'
+	fig.layout.plot_bgcolor = '#e1e1e1'
+	return fig
+
+@app.callback(
+	Output('iris_barplot_sepalWidth', 'figure'),
+	Input('iris_species_dropdown', 'value')
+)
+def figure1(input):
+	if type(input) == str:
+		input = [input]
+	df_iris_slice = df_iris[df_iris['species'].isin(input)]
+	fig = px.histogram(
+		df_iris_slice, x='sepal_width', color='species', nbins=40
+	)
+	fig.update_layout(barmode='overlay')
+	fig.update_traces(opacity=0.75)
+	fig.layout.title = "title1"
+	fig.layout.paper_bgcolor = '#f2f2f2'
+	fig.layout.plot_bgcolor = '#e1e1e1'
+	return fig
+
+
 
 if __name__ == '__main__':
 	app.run_server(
