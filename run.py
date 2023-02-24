@@ -17,36 +17,62 @@ import styles
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.config['suppress_callback_exceptions'] = True
+
 # Authentification
 auth = dash_auth.BasicAuth(
     app,
     secrets_users.VALID_USERNAME_PASSWORD_PAIRS
 )
 
-# styles = {
-# 	'H1': {'textAlign':'center', 'color':'grey'},
-# 	'text': {'textAlign':'center', 'color':'grey', 'fontSize':20}
-# }
-
-np.random.seed(50)
-df = pd.DataFrame({
-	'x_rand': np.random.randint(1,61,60),
-	'y_rand': np.random.randint(1,61,60)
-})
-
 df_iris = px.data.iris()
 
 
 app.layout = html.Div([
 	html.H1(
-		children='Iris Dashboard!!!',
+		children='Dashboard for the Iris dataset',
 		style=styles.H1
 	),
-	html.Div(
-		children='This is a dashboard about the classical Iris datasetDash',
-		style=styles.text
+	dbc.Tabs(
+		[
+			dbc.Tab(label="Home", tab_id="home"),
+			dbc.Tab(label="Plots", tab_id="plots"),
+			dbc.Tab(label="Data table", tab_id="data_table")
+		],
+		id="tabs",
+		active_tab="home"
 	),
-	html.Br(),
+	html.Div(id="tab-content", className="p-4"),
+])
+
+
+homeVar = [
+	dbc.Container([
+		html.H1("Home page"),
+		dbc.Row([
+			dbc.Col([
+				dbc.Carousel(
+					items=[
+						{"key":"1", "src":"/static/images/Iris_plant.jpg", "caption":"Iris flower", "img_style":{"max-height":"400px"}},
+						{"key":"2", "src":"/static/images/iris2.jpg", "caption":"Iris flower 2", "img_style":{"max-height":"400px"}}
+					],
+					controls=True,
+					indicators=True,
+					interval=2000
+				),
+			], width=8)
+		], justify='center'),
+		html.Br(),
+		dcc.Markdown("""
+		This is a Dashboard dedicated to the classical Iris dataset, with data on different classes of the Iris plant (Iris Setosa, Iris Versicolor, and Iris Virginica) on their sepal and petal lengths and widths.
+		
+		More about the Iris flower can be found here: https://en.wikipedia.org/wiki/Iris_flower_data_set
+		
+		In this dashboard, I will explore different properties of the Iris flower by using different data investigation methods.""")
+	])
+]
+
+plotsVar = [
 	# link: https://www.youtube.com/watch?v=1nEL0S8i2Wk
 	dbc.Row([
 		dbc.Col([
@@ -107,7 +133,28 @@ app.layout = html.Div([
 	# ),
 	# # dcc.Graph(id = 'iris_barplot_sepalLength'),
 	# dash_table.DataTable(df_iris.to_dict('records'), [{"name": i, "id": i} for i in df_iris.columns])
-])
+]
+
+tableVar = [
+	dbc.Table.from_dataframe(df_iris, striped=True, bordered=True, hover=True, responsive='sm', size='sm')
+]
+
+@app.callback(
+	Output("tab-content", "children"),
+	Input("tabs", "active_tab"),
+)
+def render_tab_content(active_tab):
+	"""
+	This callback takes the 'active_tab' property as input, as well as the
+	stored graphs, and renders the tab content depending on what the value of
+	'active_tab' is.
+	"""
+	if active_tab == "home":
+		return homeVar
+	elif active_tab == "plots":
+		return plotsVar
+	elif active_tab == "data_table":
+		return tableVar
 
 @app.callback(
 	Output("iris_scatterplot", "figure"), 
